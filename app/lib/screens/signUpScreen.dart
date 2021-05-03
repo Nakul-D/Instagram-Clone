@@ -1,13 +1,47 @@
 import 'package:flutter/material.dart';
+import 'mainPageView.dart';
+import 'package:app/logic/databaseBloc.dart';
+import 'package:app/logic/databaseEvents.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class SignUpScreen extends StatelessWidget {
 
+  final DatabaseBloc databaseBloc;
+
+  SignUpScreen({@required this.databaseBloc});
+  
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController(); 
+  final TextEditingController passwordController = TextEditingController();
 
-  void signUp() {
-    print("Sign Up");
+  void signUp(BuildContext context) async {
+    // This function will create a new user in firestore
+    final SignUpEvent _event = SignUpEvent(
+      username: usernameController.text,
+      email: emailController.text,
+      password: passwordController.text,
+    );
+    dynamic result = await databaseBloc.mapEventToState(_event).first;
+    if (result == "Created new user") {
+      // Sign Up successful, push to MainPageView
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => MainPageView(databaseBloc: databaseBloc),
+        )
+      );
+    } else {
+      // Sign up unsuccessful
+      // Show a toaster message displaying the error
+      Fluttertoast.showToast(
+        msg: result,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.redAccent,
+        textColor: Colors.white,
+        fontSize: 16.0
+      );
+    }
   }
 
   @override
@@ -98,7 +132,7 @@ class SignUpScreen extends StatelessWidget {
               ),
               SizedBox(height: 15.0),
               GestureDetector(
-                onTap: () => signUp(),
+                onTap: () => signUp(context),
                 child: Container(
                   width: double.maxFinite,
                   alignment: Alignment.center,

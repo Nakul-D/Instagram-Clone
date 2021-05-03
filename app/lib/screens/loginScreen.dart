@@ -1,13 +1,44 @@
 import 'package:flutter/material.dart';
 import 'signUpScreen.dart';
+import 'mainPageView.dart';
+import 'package:app/logic/databaseBloc.dart';
+import 'package:app/logic/databaseEvents.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class LoginScreen extends StatelessWidget {
 
+  final DatabaseBloc databaseBloc = DatabaseBloc();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  void logIn() {
-    print("Log In");
+  void logIn(BuildContext context) async {
+    // This function will handle authentication
+    // Once authenticated, Home screen will be displayed
+    final LoginEvent _event = LoginEvent(
+      email: emailController.text,
+      password: passwordController.text,
+    );
+    dynamic result = await databaseBloc.mapEventToState(_event).first;
+    if (result == "Logged In") {
+      // Login successful, push to MainPageView
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => MainPageView(databaseBloc: databaseBloc),
+        )
+      );
+    } else {
+      // Login unsuccessful
+      // Show a toaster message displaying the error
+      Fluttertoast.showToast(
+        msg: result,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.redAccent,
+        textColor: Colors.white,
+        fontSize: 16.0
+      );
+    }
   }
 
   @override
@@ -76,7 +107,7 @@ class LoginScreen extends StatelessWidget {
               ),
               SizedBox(height: 15.0),
               GestureDetector(
-                onTap: () => logIn(),
+                onTap: () => logIn(context),
                 child: Container(
                   width: double.maxFinite,
                   alignment: Alignment.center,
@@ -129,7 +160,7 @@ class LoginScreen extends StatelessWidget {
               GestureDetector(
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => SignUpScreen()
+                    builder: (context) => SignUpScreen(databaseBloc: databaseBloc),
                   ));
                 },
                 child: Container(

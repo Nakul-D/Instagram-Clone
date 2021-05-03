@@ -11,5 +11,8 @@ Instagram Clone using Flutter and Firebase
 >Note : Firebase emulator must be installed
 
 - Clone the repo to your local environment
-- Navigate to `/Instagram-Clone/Backend` folder in command prompt
-- Run this command `firebase emulators:start --import=./dataSet --export-on-exit`
+- Run `flutter pub get`
+- Navigate to **/Instagram-Clone/Backend/functions** folder in command prompt
+- Run `npm install`
+- Navigate to **/Instagram-Clone/Backend**
+- Run `firebase emulators:start --import=./dataSet --export-on-exit`
