@@ -1,18 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:app/logic/databaseBloc.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:app/screens/uploadScreen.dart';
 
 class AddScreen extends StatelessWidget {
-  
+
   final DatabaseBloc databaseBloc;
   
   AddScreen({@required this.databaseBloc});
 
-  openCamera() {
-    print("Open camera");
+  openCamera(BuildContext context) async {
+    // This function will handle taking photo
+    final pickedFile = await ImagePicker().getImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => UploadScreen(
+            databaseBloc: databaseBloc,
+            imageFile: File(pickedFile.path),
+          ),
+        )
+      );
+    }
   }
 
-  importFromGallery() {
-    print("Import from gallery");
+  importFromGallery(BuildContext context) async {
+    // This function will handle picking image from gallery
+    final pickedFile = await ImagePicker().getImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => UploadScreen(
+            databaseBloc: databaseBloc,
+            imageFile: File(pickedFile.path),
+          ),
+        )
+      );
+    }
   }
 
   @override
@@ -32,7 +57,7 @@ class AddScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               GestureDetector(
-                onTap: openCamera,
+                onTap: () => openCamera(context),
                 child: Container(
                   padding: EdgeInsets.all(12.0),
                   child: Row(
@@ -50,14 +75,14 @@ class AddScreen extends StatelessWidget {
                     ],
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.blue,
+                    color: Colors.blueAccent,
                     borderRadius: BorderRadius.circular(100.0),
                   ),
                 ),
               ),
               SizedBox(height: 15.0),
               GestureDetector(
-                onTap: importFromGallery,
+                onTap: () => importFromGallery(context),
                 child: Container(
                   padding: EdgeInsets.all(12.0),
                   child: Row(
@@ -75,7 +100,7 @@ class AddScreen extends StatelessWidget {
                     ],
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.blue,
+                    color: Colors.blueAccent,
                     borderRadius: BorderRadius.circular(100.0),
                   ),
                 ),

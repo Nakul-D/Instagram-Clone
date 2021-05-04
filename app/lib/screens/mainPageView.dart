@@ -38,6 +38,7 @@ class _MainPageViewState extends State<MainPageView> {
       ),
       bottomNavigationBar: CupertinoTabBar(
         currentIndex: pageIndex,
+        activeColor: Theme.of(context).primaryColor,
         onTap: (tappedIndex) {
           setState(() {
             pageIndex = tappedIndex;
