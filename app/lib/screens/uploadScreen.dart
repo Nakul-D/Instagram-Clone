@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:app/logic/databaseBloc.dart';
+import 'package:app/logic/databaseEvents.dart';
 import 'dart:io';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
-class UploadScreen extends StatelessWidget {
+class UploadScreen extends StatefulWidget {
 
   final DatabaseBloc databaseBloc;
   final File imageFile;
 
   UploadScreen({@required this.databaseBloc, @required this.imageFile});
 
+  @override
+  _UploadScreenState createState() => _UploadScreenState();
+}
+
+class _UploadScreenState extends State<UploadScreen> {
+
   final captionController = TextEditingController();
   final locationController = TextEditingController();
+  bool uploadingPost = false;
 
   getLocation() async {
     // This function will get current location and format it
@@ -26,9 +34,18 @@ class UploadScreen extends StatelessWidget {
     locationController.text = formattedAddress;
   }
 
-  upload() {
+  upload(BuildContext context) async {
+    setState(() {
+      uploadingPost = true;
+    });
     // This function will upload the post to firebase
-    print("Upload");
+    UploadPostEvent event = UploadPostEvent(
+      imageFile: widget.imageFile,
+      caption: captionController.text,
+      location: locationController.text,
+    );
+    await widget.databaseBloc.mapEventToState(event).first;
+    Navigator.pop(context);
   }
 
   @override
@@ -51,7 +68,7 @@ class UploadScreen extends StatelessWidget {
                     child: Container(
                       decoration: BoxDecoration(
                         image: DecorationImage(
-                          image: FileImage(imageFile),
+                          image: FileImage(widget.imageFile),
                           fit: BoxFit.cover
                         ),
                       ),
@@ -117,7 +134,7 @@ class UploadScreen extends StatelessWidget {
               SizedBox(height: 15),
               Center(
                 child: GestureDetector(
-                  onTap: () => upload(),
+                  onTap: () => upload(context),
                   child: Container(
                     padding: EdgeInsets.only(left: 30.0, right: 30.0, top: 10.0, bottom: 10.0),
                     child: Text(
@@ -134,6 +151,8 @@ class UploadScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              SizedBox(height: 15),
+              uploadingPost ? LinearProgressIndicator(valueColor: AlwaysStoppedAnimation(Colors.lightBlue)) : Text(''),
             ],
           ),
         ),
