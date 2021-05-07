@@ -14,6 +14,9 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        primaryColor: Colors.blueAccent,
+      ),
       home: FutureBuilder(
         future: _initialization,
         builder: (context, snapshot) {
