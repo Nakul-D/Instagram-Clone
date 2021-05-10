@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:app/models/user.dart';
+import 'package:app/models/post.dart';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'package:path_provider/path_provider.dart';
@@ -23,6 +24,8 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
 
     final usersRef = firestore.collection('users');
     final postsRef = firestore.collection('posts');
+    final followersRef = firestore.collection('followers');
+    final followingRef = firestore.collection('following');
 
     // Authenticating user
     if (event is LoginEvent) {
@@ -105,6 +108,70 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
           "like": {},
         });
       yield "Post uploaded";
+    }
+
+    // Fetching profile data
+    if (event is GetProfileEvent) {
+      // Fetching user's info
+      String username;
+      String bio;
+      String profileImgUrl;
+      if (event.profileUserId == currentUser.id){
+        username = currentUser.username;
+        bio = currentUser.bio;
+        profileImgUrl = currentUser.profileImgUrl;
+      } else {
+        DocumentSnapshot userDocument = await usersRef
+          .doc(event.profileUserId)
+          .get();
+        username = userDocument["username"];
+        bio = userDocument["bio"];
+        profileImgUrl = userDocument["profileImgUrl"];
+      }
+      // Fetching user's followers
+      QuerySnapshot followersSnapshot = await followersRef
+        .doc(event.profileUserId)
+        .collection("userFollowers")
+        .get();
+      int followers = followersSnapshot.docs.length;
+      // Fetching user's following
+      QuerySnapshot followingSnapshot = await followingRef
+        .doc(event.profileUserId)
+        .collection("userFollowing")
+        .get();
+      int following = followingSnapshot.docs.length;
+      // Getting user's posts
+      QuerySnapshot postSnapshot = await postsRef
+        .doc(event.profileUserId)
+        .collection("posts")
+        .get();
+      int postCount = postSnapshot.docs.length;
+      List<PostModel> posts = [];
+      postSnapshot.docs.forEach((doc) {
+        Map postData = doc.data();
+        Timestamp timestamp = postData["timestamp"];
+        PostModel post = PostModel(
+          postId: postData["postId"],
+          ownerId: postData["ownerId"],
+          username: postData["username"],
+          mediaUrl: postData["mediaUrl"],
+          caption: postData["caption"],
+          location: postData["location"],
+          timestamp: timestamp.toDate(),
+          like: postData["like"],
+        );
+        posts.add(post);
+      });
+      yield {
+        "profileUserId": event.profileUserId,
+        "username": username,
+        "bio": bio,
+        "profileImgUrl": profileImgUrl,
+        "followers": followers,
+        "following": following,
+        "postCount": postCount,
+        "posts": posts,
+      };
     }
     
   }

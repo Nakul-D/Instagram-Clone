@@ -21,3 +21,8 @@ class UploadPostEvent extends DatabaseEvents {
   String location;
   UploadPostEvent({this.imageFile, this.caption, this.location});
 }
+
+class GetProfileEvent extends DatabaseEvents {
+  String profileUserId;
+  GetProfileEvent({this.profileUserId});
+}
