@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:app/logic/databaseBloc.dart';
 import 'package:app/logic/databaseEvents.dart';
+import 'package:app/widgets/postTile.dart';
 import 'package:app/models/post.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/rendering.dart';
 
 class ProfileScreen extends StatefulWidget {
 
@@ -16,8 +18,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-
-  String postOrientation = "grid";
 
   Future getProfileData() async {
     // This function will fetch profile data of the given userId
@@ -122,6 +122,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  showPostTile(PostModel postModel) {
+    // This function will display a dialog
+    // Similar to a full screen post in instagram
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return SimpleDialog(
+          children: [
+            PostTile(postModel: postModel, width: MediaQuery.of(context).size.width)
+          ],
+        );
+      }
+    );
+  }
+  
+  Widget gridViewPosts(List<PostModel> posts,BuildContext context) {
+    // This function will display posts in a grid view
+    List<GridTile> gridTiles = [];
+    posts.forEach((element) {
+      gridTiles.add(
+        GridTile(
+          child: GestureDetector(
+            child: Container(
+              child: Image(
+                image: CachedNetworkImageProvider(element.mediaUrl),
+                fit: BoxFit.cover,
+              ),
+            ),
+            onTap: () => showPostTile(element),
+          ),
+        )
+      );
+    });
+    
+    return GridView.count(
+      crossAxisCount: 3,
+      childAspectRatio: 1.0,
+      mainAxisSpacing: 1.5,
+      crossAxisSpacing: 1.5,
+      shrinkWrap: true,
+      physics: AlwaysScrollableScrollPhysics(),
+      children: gridTiles,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
@@ -138,7 +183,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             Map profileData = snapshot.data;
-            print(profileData);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -190,32 +234,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
-                Divider(thickness: 2.0),
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.grid_on),
-                      color: postOrientation == "grid" ? Theme.of(context).primaryColor : Colors.grey,
-                      onPressed: () {
-                        setState(() {
-                          postOrientation = "grid";
-                        });
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.list),
-                      color: postOrientation == "list" ? Theme.of(context).primaryColor : Colors.grey,
-                      onPressed: () {
-                        setState(() {
-                          postOrientation = "list";
-                        });
-                      },
-                    )
-                  ],
-                ),
-                Divider(thickness: 2.0),
+                Divider(thickness: 2.0, height: 0.0),
+                gridViewPosts(profileData['posts'], context),
               ],
             );
           } else {

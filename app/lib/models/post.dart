@@ -1,7 +1,9 @@
 class PostModel {
+  
   String postId;
   String ownerId;
   String username;
+  String profileImgUrl;
   String mediaUrl;
   String caption;
   String location;
@@ -12,6 +14,7 @@ class PostModel {
     this.postId,
     this.ownerId,
     this.username,
+    this.profileImgUrl,
     this.mediaUrl,
     this.caption,
     this.location,
