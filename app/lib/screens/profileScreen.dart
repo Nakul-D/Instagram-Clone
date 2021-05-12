@@ -4,7 +4,7 @@ import 'package:app/logic/databaseEvents.dart';
 import 'package:app/widgets/postTile.dart';
 import 'package:app/models/post.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/rendering.dart';
+import 'editProfileScreen.dart';
 
 class ProfileScreen extends StatefulWidget {
 
@@ -93,7 +93,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           borderRadius: BorderRadius.circular(100.0),
         ),
       ),
-      onTap: () => print("Edit profile"),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => EditProfileScreen(
+            databaseBloc: widget.databaseBloc,
+            userModel: widget.databaseBloc.currentUser)
+          )
+        );
+      },
     );
   }
 
