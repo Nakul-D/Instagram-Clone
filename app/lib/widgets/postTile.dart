@@ -3,13 +3,16 @@ import 'package:app/models/post.dart';
 import 'dart:async';
 import 'package:animator/animator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:app/logic/databaseBloc.dart';
+import 'package:app/logic/databaseEvents.dart';
 
 class PostTile extends StatefulWidget {
 
   final PostModel postModel;
   final double width;
+  final DatabaseBloc databaseBloc;
 
-  PostTile({this.postModel, this.width});
+  PostTile({this.postModel, this.width, this.databaseBloc});
 
   @override
   _PostTileState createState() => _PostTileState();
@@ -17,9 +20,31 @@ class PostTile extends StatefulWidget {
 
 class _PostTileState extends State<PostTile> {
 
-  int likeCount = 0;
+  int likeCount;
+  bool isLiked;
   bool animateHeart = false;  // This boolean will be used to display animated heart when post is liked
-  bool isLiked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    likeCount = getLikes();
+    if (widget.postModel.like.containsKey(widget.databaseBloc.currentUser.id)) {
+      isLiked = widget.postModel.like[widget.databaseBloc.currentUser.id];
+    } else {
+      isLiked = false;
+    }
+  }
+
+  int getLikes() {
+    // This function will return total number of likes of a post
+    int _likes = 0;
+    widget.postModel.like.forEach((key, value) {
+      if (value == true) {
+        _likes += 1;
+      }
+    });
+    return _likes;
+  }
 
   handleLikePost() {
     // This function will handle liking and unliking a post
@@ -28,6 +53,12 @@ class _PostTileState extends State<PostTile> {
         isLiked = false;
         likeCount -= 1;
       });
+      // Updating post in firestore
+      UnlikePostEvent event = UnlikePostEvent(
+        ownerId: widget.postModel.ownerId,
+        postId: widget.postModel.postId,
+      );
+      widget.databaseBloc.add(event);
     } else {
       setState(() {
         isLiked = true;
@@ -39,8 +70,13 @@ class _PostTileState extends State<PostTile> {
           animateHeart = false;
         });
       });
+      // Update in firestore
+      LikePostEvent event = LikePostEvent(
+        ownerId: widget.postModel.ownerId,
+        postId: widget.postModel.postId,
+      );
+      widget.databaseBloc.add(event);
     }
-    print("update in firestore");
   }
 
   showComments() {

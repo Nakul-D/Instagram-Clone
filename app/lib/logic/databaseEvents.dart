@@ -34,3 +34,15 @@ class UpdateProfileEvent extends DatabaseEvents {
   File profileImgFile;
   UpdateProfileEvent({this.username, this.bio, this.profileChanged, this.profileImgFile});
 }
+
+class LikePostEvent extends DatabaseEvents {
+  String ownerId;
+  String postId;
+  LikePostEvent({this.ownerId, this.postId});
+}
+
+class UnlikePostEvent extends DatabaseEvents {
+  String ownerId;
+  String postId; 
+  UnlikePostEvent({this.ownerId, this.postId});
+}

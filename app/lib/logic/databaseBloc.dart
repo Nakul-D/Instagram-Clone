@@ -216,6 +216,34 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
       currentUser.profileImgUrl = profileImgUrl;
       yield "Profile updated";
     }
+
+    // Liking a post
+    if (event is LikePostEvent) {
+      postsRef
+        .doc(event.ownerId)
+        .collection("posts")
+        .doc(event.postId)
+        .update({
+          "like": {
+            currentUser.id : true,
+          },
+        });
+      yield "Post liked";
+    }
+
+    // Unliking a post
+    if (event is UnlikePostEvent) {
+      postsRef
+        .doc(event.ownerId)
+        .collection("posts")
+        .doc(event.postId)
+        .update({
+          "like": {
+            currentUser.id : false,
+          },
+        });
+      yield "Post Unliked";
+    }
     
   }
 }

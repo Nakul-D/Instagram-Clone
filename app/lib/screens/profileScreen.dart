@@ -148,7 +148,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context) {
         return SimpleDialog(
           children: [
-            PostTile(postModel: postModel, width: MediaQuery.of(context).size.width)
+            PostTile(
+              postModel: postModel,
+              width: MediaQuery.of(context).size.width,
+              databaseBloc: widget.databaseBloc
+            )
           ],
         );
       }
