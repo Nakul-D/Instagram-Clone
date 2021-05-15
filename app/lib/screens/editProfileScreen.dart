@@ -22,6 +22,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Image profilePicture;
   TextEditingController usernameController = TextEditingController();
   TextEditingController bioController = TextEditingController();
+  bool profileChanged = false;
+  File changedProfileFile;
+  bool isUpdating = false;
 
   @override
   void initState() {
@@ -64,9 +67,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 GestureDetector(
                   onTap: () async {
                     final pickedFile = await ImagePicker().getImage(source: ImageSource.camera);
-                    setState(() {
-                      profilePicture = Image.file(File(pickedFile.path));
-                    });
+                    if (pickedFile.path.isNotEmpty) {
+                      setState(() {
+                        profileChanged = true;
+                        changedProfileFile = File(pickedFile.path);
+                        profilePicture = Image.file(File(pickedFile.path));
+                      });
+                    } 
                     Navigator.pop(context);
                   },
                   child: Container(
@@ -95,9 +102,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 GestureDetector(
                   onTap: () async {
                     final pickedFile = await ImagePicker().getImage(source: ImageSource.gallery);
-                    setState(() {
-                      profilePicture = Image.file(File(pickedFile.path));
-                    });
+                    if (pickedFile.path.isNotEmpty) {
+                      setState(() {
+                        profileChanged = true;
+                        changedProfileFile = File(pickedFile.path);
+                        profilePicture = Image.file(File(pickedFile.path));
+                      });
+                    }                
                     Navigator.pop(context);
                   },
                   child: Container(
@@ -130,6 +141,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  updateProfile(BuildContext context) async {
+    // This function will update username/bio/profileImg in firestore
+    setState(() {
+      isUpdating = true;
+    });
+    UpdateProfileEvent event = UpdateProfileEvent(
+      username: usernameController.text,
+      bio: bioController.text,
+      profileChanged: profileChanged,
+      profileImgFile: changedProfileFile,
+    );
+    await widget.databaseBloc.mapEventToState(event).first;
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -138,6 +164,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           "Edit profile"
         ),
         centerTitle: true,
+        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         // Single child scroll view is used to avoid overflow error when keyboard appears
@@ -185,9 +212,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               SizedBox(height: 16.0),
               Center(
                 child: GestureDetector(
-                  onTap: () {
-                    print("Update");
-                  },
+                  onTap: () => updateProfile(context),
                   child: Container(
                     padding: EdgeInsets.all(12.0),
                     child: Row(
@@ -216,7 +241,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Center(
                 child: GestureDetector(
                   onTap: () {
-                    print("Discard");
+                    Navigator.pop(context);
                   },
                   child: Container(
                     padding: EdgeInsets.all(12.0),
@@ -242,6 +267,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ),
               ),
+              SizedBox(height: 16.0),
+              isUpdating ? LinearProgressIndicator(valueColor: AlwaysStoppedAnimation(Colors.lightBlue)) : Text(''),
             ],
           ),
         ),

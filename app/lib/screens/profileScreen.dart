@@ -19,11 +19,20 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
 
-  Future getProfileData() async {
-    // This function will fetch profile data of the given userId
+  Map profileScreenData = {};
+
+  void initState() {
+    getProfileData();
+    super.initState();
+  }
+
+  getProfileData() async {
+    // This function will fetch profile screen data
     DatabaseEvents event = GetProfileEvent(profileUserId: widget.profileUserId);
-    Map profileData = await widget.databaseBloc.mapEventToState(event).first;
-    return profileData;
+    Map data = await widget.databaseBloc.mapEventToState(event).first;
+    setState(() {
+      profileScreenData = data;
+    });
   }
 
   Widget profilePicture(String url, double width) {
@@ -93,14 +102,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           borderRadius: BorderRadius.circular(100.0),
         ),
       ),
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => EditProfileScreen(
             databaseBloc: widget.databaseBloc,
             userModel: widget.databaseBloc.currentUser)
           )
         );
+        getProfileData(); // Refreshing profile page
       },
     );
   }
@@ -186,75 +196,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),
-      body: FutureBuilder(
-        future: getProfileData(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            Map profileData = snapshot.data;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      body: profileScreenData.isEmpty ? Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+        ),
+      ) : Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      profilePicture(profileData['profileImgUrl'], width),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 25),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  buildCountColumn("Posts", profileData['postCount']),
-                                  buildCountColumn("Followers", profileData['followers']),
-                                  buildCountColumn("Following", profileData['following']),
-                                ],
-                              ),
-                              SizedBox(height: 10.0),
-                              widget.profileUserId == widget.databaseBloc.currentUser.id ? editButton(context) : followButton(context)
-                            ],
-                          ),
+                profilePicture(profileScreenData['profileImgUrl'], width),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 25),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            buildCountColumn("Posts", profileScreenData['postCount']),
+                            buildCountColumn("Followers", profileScreenData['followers']),
+                            buildCountColumn("Following", profileScreenData['following']),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
-                  child: Text(
-                    "${profileData['username']}",
-                    style: TextStyle(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.bold
+                        SizedBox(height: 10.0),
+                        widget.profileUserId == widget.databaseBloc.currentUser.id ? editButton(context) : followButton(context)
+                      ],
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, top: 10.0, bottom: 10.0),
-                  child: Text(
-                    "${profileData['bio']}",
-                    style: TextStyle(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.w400
-                    ),
-                  ),
-                ),
-                Divider(thickness: 2.0, height: 0.0),
-                gridViewPosts(profileData['posts'], context),
               ],
-            );
-          } else {
-            return Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 20.0),
+            child: Text(
+              "${profileScreenData['username']}",
+              style: TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.bold
               ),
-            );
-          }
-        }
-      ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 20.0, top: 10.0, bottom: 10.0),
+            child: Text(
+              "${profileScreenData['bio']}",
+              style: TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.w400
+              ),
+            ),
+          ),
+          Divider(thickness: 2.0, height: 0.0),
+          gridViewPosts(profileScreenData['posts'], context),
+        ],
+      )
     );
   }
 }

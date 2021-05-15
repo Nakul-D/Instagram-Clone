@@ -26,3 +26,11 @@ class GetProfileEvent extends DatabaseEvents {
   String profileUserId;
   GetProfileEvent({this.profileUserId});
 }
+
+class UpdateProfileEvent extends DatabaseEvents {
+  String username;
+  String bio;
+  bool profileChanged;
+  File profileImgFile;
+  UpdateProfileEvent({this.username, this.bio, this.profileChanged, this.profileImgFile});
+}

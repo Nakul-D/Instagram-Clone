@@ -175,6 +175,47 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
         "posts": posts,
       };
     }
+
+    // Updating profile
+    if (event is UpdateProfileEvent) {
+      String profileImgUrl = currentUser.profileImgUrl;
+      String username = currentUser.username;
+      String bio = currentUser.bio;
+      // Uploading profile picture if it is changed
+      if (event.profileChanged) {
+        // Generating profile picture Id
+        String profilePictureId = Uuid().v4();
+        TaskSnapshot taskSnapshot;
+        // Compressing image
+        File image = await compressImage(event.profileImgFile, profilePictureId);
+        // Uploading image
+        UploadTask uploadTask = firebaseStorage.child("profile_$profilePictureId.jpg").putFile(image);
+        await uploadTask.whenComplete(() => taskSnapshot = uploadTask.snapshot);
+        String downloadUrl = await taskSnapshot.ref.getDownloadURL();
+        profileImgUrl = downloadUrl;
+      }
+      // Checking if username is changed
+      if (event.username != currentUser.username) {
+        username = event.username;
+      }
+      // Checking if bio is changed
+      if (event.bio != currentUser.bio) {
+        bio = event.bio;
+      }
+      // Updating user in firestore
+      await usersRef
+        .doc(currentUser.id)
+        .update({
+          "username": username,
+          "bio": bio,
+          "profileImgUrl": profileImgUrl,
+        });
+      // Updating current user
+      currentUser.username = username;
+      currentUser.bio = bio;
+      currentUser.profileImgUrl = profileImgUrl;
+      yield "Profile updated";
+    }
     
   }
 }
@@ -197,12 +238,12 @@ FirebaseAuth initializeFirebaseAuth() {
   return firebaseAuth;
 }
 
-Future<File> compressImage(File rawImage, String postId) async {
+Future<File> compressImage(File rawImage, String id) async {
   // This function will compress the given image
   final tempDir = await getTemporaryDirectory();
   final path = tempDir.path;
   Im.Image decodedImageFile = Im.decodeImage(rawImage.readAsBytesSync());
-  final compressedImageFile = File('$path/img_$postId.jpg')..writeAsBytesSync(
+  final compressedImageFile = File('$path/img_$id.jpg')..writeAsBytesSync(
     Im.encodeJpg(decodedImageFile, quality: 80),
   );
   return compressedImageFile;
