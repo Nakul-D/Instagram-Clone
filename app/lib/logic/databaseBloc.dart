@@ -26,6 +26,7 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
     final postsRef = firestore.collection('posts');
     final followersRef = firestore.collection('followers');
     final followingRef = firestore.collection('following');
+    final commentsRef = firestore.collection('comments');
 
     // Authenticating user
     if (event is LoginEvent) {
@@ -243,6 +244,45 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
           },
         });
       yield "Post Unliked";
+    }
+
+    // Fetching comments
+    if (event is GetCommentsEvent) {
+      List comments = [];
+      QuerySnapshot snapshot = await commentsRef
+        .doc(event.postId)
+        .collection('comments')
+        .orderBy("timestamp", descending: false)
+        .get();
+      // Adding comment data to comments list
+      for (int i = 0; i < snapshot.docs.length; i++) {
+        QueryDocumentSnapshot doc = snapshot.docs[i];
+        DocumentSnapshot userDocument = await usersRef.doc(doc["userId"]).get();
+        String username = userDocument.data()["username"];
+        String profileImgUrl = userDocument.data()["profileImgUrl"];
+        Timestamp timestamp = doc["timestamp"];
+        comments.add({
+          "userId": doc["userId"],
+          "username": username,
+          "profileImgUrl": profileImgUrl,
+          "comment": doc["comment"],
+          "timestamp": timestamp.toDate(),
+        });
+      }
+      yield comments;
+    }
+
+    // Posting a comment
+    if (event is AddCommentEvent) {
+      commentsRef
+        .doc(event.postId)
+        .collection("comments")
+        .add({
+          "userId": currentUser.id,
+          "comment": event.comment,
+          "timestamp": DateTime.now(),
+        });
+      yield "Comment posted";
     }
     
   }

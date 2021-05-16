@@ -46,3 +46,14 @@ class UnlikePostEvent extends DatabaseEvents {
   String postId; 
   UnlikePostEvent({this.ownerId, this.postId});
 }
+
+class GetCommentsEvent extends DatabaseEvents {
+  String postId;
+  GetCommentsEvent({this.postId});
+}
+
+class AddCommentEvent extends DatabaseEvents {
+  String postId;
+  String comment;
+  AddCommentEvent({this.postId ,this.comment});
+}

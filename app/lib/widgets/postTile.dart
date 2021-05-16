@@ -5,6 +5,7 @@ import 'package:animator/animator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:app/logic/databaseBloc.dart';
 import 'package:app/logic/databaseEvents.dart';
+import 'package:app/screens/commentScreen.dart';
 
 class PostTile extends StatefulWidget {
 
@@ -79,9 +80,16 @@ class _PostTileState extends State<PostTile> {
     }
   }
 
-  showComments() {
+  showComments(BuildContext context) {
     // This function will display comments
-    print("display comments");
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CommentScreen(
+          postId: widget.postModel.postId,
+          databaseBloc: widget.databaseBloc
+        )
+      )
+    );
   }
 
   @override
@@ -173,7 +181,7 @@ class _PostTileState extends State<PostTile> {
                   size: 28.0,
                   color: Colors.blue,
                 ),
-                onTap: () => showComments(),
+                onTap: () => showComments(context),
               ),
             ],
           ),
