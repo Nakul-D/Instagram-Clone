@@ -6,6 +6,9 @@ Instagram Clone using Flutter and Firebase
 - **Bloc** for state management
 - **Firebase** for backend
 
+# Screenshots
+<img src = "Screenshots/LoginScreen.jpg" width = "200" alt = "">  <img src = "Screenshots/ProfileScreen.jpg" width = "200" alt = "">  <img src = "Screenshots/UploadScreen.jpg" width = "200" alt = "">
+
 # How to run this project in your local environment
 
 >Note : Firebase emulator must be installed
