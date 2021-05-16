@@ -33,7 +33,7 @@ class _MainPageViewState extends State<MainPageView> {
           SearchScreen(databaseBloc: widget.databaseBloc),
           AddScreen(databaseBloc: widget.databaseBloc),
           ActivityScreen(databaseBloc: widget.databaseBloc),
-          ProfileScreen(databaseBloc: widget.databaseBloc),
+          ProfileScreen(databaseBloc: widget.databaseBloc, profileUserId: widget.databaseBloc.currentUser.id),
         ],
       ),
       bottomNavigationBar: CupertinoTabBar(

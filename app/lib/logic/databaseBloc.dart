@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:app/models/user.dart';
+import 'package:app/models/post.dart';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'package:path_provider/path_provider.dart';
@@ -23,6 +24,9 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
 
     final usersRef = firestore.collection('users');
     final postsRef = firestore.collection('posts');
+    final followersRef = firestore.collection('followers');
+    final followingRef = firestore.collection('following');
+    final commentsRef = firestore.collection('comments');
 
     // Authenticating user
     if (event is LoginEvent) {
@@ -98,6 +102,7 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
           "postId": postId,
           "ownerId": currentUser.id,
           "username": currentUser.username,
+          "profileImgUrl": currentUser.profileImgUrl,
           "mediaUrl": downloadUrl,
           "caption": event.caption,
           "location": event.location,
@@ -105,6 +110,179 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
           "like": {},
         });
       yield "Post uploaded";
+    }
+
+    // Fetching profile data
+    if (event is GetProfileEvent) {
+      // Fetching user's info
+      String username;
+      String bio;
+      String profileImgUrl;
+      if (event.profileUserId == currentUser.id){
+        username = currentUser.username;
+        bio = currentUser.bio;
+        profileImgUrl = currentUser.profileImgUrl;
+      } else {
+        DocumentSnapshot userDocument = await usersRef
+          .doc(event.profileUserId)
+          .get();
+        username = userDocument["username"];
+        bio = userDocument["bio"];
+        profileImgUrl = userDocument["profileImgUrl"];
+      }
+      // Fetching user's followers
+      QuerySnapshot followersSnapshot = await followersRef
+        .doc(event.profileUserId)
+        .collection("userFollowers")
+        .get();
+      int followers = followersSnapshot.docs.length;
+      // Fetching user's following
+      QuerySnapshot followingSnapshot = await followingRef
+        .doc(event.profileUserId)
+        .collection("userFollowing")
+        .get();
+      int following = followingSnapshot.docs.length;
+      // Getting user's posts
+      QuerySnapshot postSnapshot = await postsRef
+        .doc(event.profileUserId)
+        .collection("posts")
+        .get();
+      int postCount = postSnapshot.docs.length;
+      List<PostModel> posts = [];
+      postSnapshot.docs.forEach((doc) {
+        Map postData = doc.data();
+        Timestamp timestamp = postData["timestamp"];
+        PostModel post = PostModel(
+          postId: postData["postId"],
+          ownerId: postData["ownerId"],
+          username: postData["username"],
+          profileImgUrl: postData["profileImgUrl"],
+          mediaUrl: postData["mediaUrl"],
+          caption: postData["caption"],
+          location: postData["location"],
+          timestamp: timestamp.toDate(),
+          like: postData["like"],
+        );
+        posts.add(post);
+      });
+      yield {
+        "profileUserId": event.profileUserId,
+        "username": username,
+        "bio": bio,
+        "profileImgUrl": profileImgUrl,
+        "followers": followers,
+        "following": following,
+        "postCount": postCount,
+        "posts": posts,
+      };
+    }
+
+    // Updating profile
+    if (event is UpdateProfileEvent) {
+      String profileImgUrl = currentUser.profileImgUrl;
+      String username = currentUser.username;
+      String bio = currentUser.bio;
+      // Uploading profile picture if it is changed
+      if (event.profileChanged) {
+        // Generating profile picture Id
+        String profilePictureId = Uuid().v4();
+        TaskSnapshot taskSnapshot;
+        // Compressing image
+        File image = await compressImage(event.profileImgFile, profilePictureId);
+        // Uploading image
+        UploadTask uploadTask = firebaseStorage.child("profile_$profilePictureId.jpg").putFile(image);
+        await uploadTask.whenComplete(() => taskSnapshot = uploadTask.snapshot);
+        String downloadUrl = await taskSnapshot.ref.getDownloadURL();
+        profileImgUrl = downloadUrl;
+      }
+      // Checking if username is changed
+      if (event.username != currentUser.username) {
+        username = event.username;
+      }
+      // Checking if bio is changed
+      if (event.bio != currentUser.bio) {
+        bio = event.bio;
+      }
+      // Updating user in firestore
+      await usersRef
+        .doc(currentUser.id)
+        .update({
+          "username": username,
+          "bio": bio,
+          "profileImgUrl": profileImgUrl,
+        });
+      // Updating current user
+      currentUser.username = username;
+      currentUser.bio = bio;
+      currentUser.profileImgUrl = profileImgUrl;
+      yield "Profile updated";
+    }
+
+    // Liking a post
+    if (event is LikePostEvent) {
+      postsRef
+        .doc(event.ownerId)
+        .collection("posts")
+        .doc(event.postId)
+        .update({
+          "like": {
+            currentUser.id : true,
+          },
+        });
+      yield "Post liked";
+    }
+
+    // Unliking a post
+    if (event is UnlikePostEvent) {
+      postsRef
+        .doc(event.ownerId)
+        .collection("posts")
+        .doc(event.postId)
+        .update({
+          "like": {
+            currentUser.id : false,
+          },
+        });
+      yield "Post Unliked";
+    }
+
+    // Fetching comments
+    if (event is GetCommentsEvent) {
+      List comments = [];
+      QuerySnapshot snapshot = await commentsRef
+        .doc(event.postId)
+        .collection('comments')
+        .orderBy("timestamp", descending: false)
+        .get();
+      // Adding comment data to comments list
+      for (int i = 0; i < snapshot.docs.length; i++) {
+        QueryDocumentSnapshot doc = snapshot.docs[i];
+        DocumentSnapshot userDocument = await usersRef.doc(doc["userId"]).get();
+        String username = userDocument.data()["username"];
+        String profileImgUrl = userDocument.data()["profileImgUrl"];
+        Timestamp timestamp = doc["timestamp"];
+        comments.add({
+          "userId": doc["userId"],
+          "username": username,
+          "profileImgUrl": profileImgUrl,
+          "comment": doc["comment"],
+          "timestamp": timestamp.toDate(),
+        });
+      }
+      yield comments;
+    }
+
+    // Posting a comment
+    if (event is AddCommentEvent) {
+      commentsRef
+        .doc(event.postId)
+        .collection("comments")
+        .add({
+          "userId": currentUser.id,
+          "comment": event.comment,
+          "timestamp": DateTime.now(),
+        });
+      yield "Comment posted";
     }
     
   }
@@ -128,12 +306,12 @@ FirebaseAuth initializeFirebaseAuth() {
   return firebaseAuth;
 }
 
-Future<File> compressImage(File rawImage, String postId) async {
+Future<File> compressImage(File rawImage, String id) async {
   // This function will compress the given image
   final tempDir = await getTemporaryDirectory();
   final path = tempDir.path;
   Im.Image decodedImageFile = Im.decodeImage(rawImage.readAsBytesSync());
-  final compressedImageFile = File('$path/img_$postId.jpg')..writeAsBytesSync(
+  final compressedImageFile = File('$path/img_$id.jpg')..writeAsBytesSync(
     Im.encodeJpg(decodedImageFile, quality: 80),
   );
   return compressedImageFile;
