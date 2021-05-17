@@ -225,9 +225,7 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
         .collection("posts")
         .doc(event.postId)
         .update({
-          "like": {
-            currentUser.id : true,
-          },
+          'like.${currentUser.id}' : true,
         });
       yield "Post liked";
     }
@@ -239,9 +237,7 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
         .collection("posts")
         .doc(event.postId)
         .update({
-          "like": {
-            currentUser.id : false,
-          },
+          'like.${currentUser.id}' : false,
         });
       yield "Post Unliked";
     }
@@ -284,7 +280,23 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
         });
       yield "Comment posted";
     }
-    
+
+    // Search users
+    if (event is SearchEvent) {
+      List users = [];
+      QuerySnapshot snapshot = await usersRef
+        .where("username", isGreaterThanOrEqualTo: event.searchText)
+        .get();
+      snapshot.docs.forEach((doc) {
+        users.add({
+          "profileId": doc["id"],
+          "username": doc["username"],
+          "profileImgUrl": doc["profileImgUrl"],
+        });
+      });
+      yield users;
+    }
+
   }
 }
 

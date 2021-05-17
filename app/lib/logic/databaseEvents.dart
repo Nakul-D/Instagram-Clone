@@ -57,3 +57,8 @@ class AddCommentEvent extends DatabaseEvents {
   String comment;
   AddCommentEvent({this.postId ,this.comment});
 }
+
+class SearchEvent extends DatabaseEvents {
+  String searchText;
+  SearchEvent({this.searchText});
+}

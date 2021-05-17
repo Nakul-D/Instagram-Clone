@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:app/logic/databaseBloc.dart';
 import 'package:app/logic/databaseEvents.dart';
 import 'package:app/screens/profileScreen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class SearchScreen extends StatefulWidget {
   
@@ -14,11 +15,17 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+
+  List searchResult = [];
   TextEditingController searchController = TextEditingController();
 
-  search() {
+  search() async {
     // This function will search the typed user
-    print("Search");
+    SearchEvent event = SearchEvent(searchText: searchController.text);
+    List result = await widget.databaseBloc.mapEventToState(event).first;
+    setState(() {
+      searchResult = result;
+    });
   }
 
   @override
@@ -43,12 +50,24 @@ class _SearchScreenState extends State<SearchScreen> {
                       child: TextFormField(
                         controller: searchController,
                         decoration: InputDecoration(
-                          hintText: "Search a user",
+                          hintText: "Search a user...",
+                          hintStyle: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.bold
+                          ),
+                          focusColor: Colors.white,
                           border: InputBorder.none,
                         ),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.bold
+                        ),
+                        cursorColor: Colors.white,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.5),
+                        color: Colors.blueAccent,
                         borderRadius: BorderRadius.circular(100.0)
                       ),
                     ),
@@ -56,11 +75,11 @@ class _SearchScreenState extends State<SearchScreen> {
                   SizedBox(width: 10.0),
                   Container(
                     child: IconButton(
-                      icon: Icon(Icons.search),
+                      icon: Icon(Icons.search, color: Colors.white),
                       onPressed: () => search(),
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.5),
+                      color: Colors.blueAccent,
                       borderRadius: BorderRadius.circular(100.0)
                     ),
                   ),
@@ -69,7 +88,50 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             Expanded(
               child: ListView(
-                children: [],
+                children: [
+                  for (int i = 0; i < searchResult.length; i++) Padding(
+                    padding: EdgeInsets.only(top: 8.0, left: 10.0, right: 10.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) {
+                            return ProfileScreen(
+                              databaseBloc: widget.databaseBloc,
+                              profileUserId: searchResult[i]["profileId"]
+                            );
+                          }),
+                        );
+                      },
+                      child: Container(
+                        padding: EdgeInsets.only(top: 8.0, bottom: 8.0, left: 8.0, right: 8.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: MediaQuery.of(context).size.width/15,
+                              backgroundColor: Colors.lightBlueAccent,
+                              backgroundImage: CachedNetworkImageProvider(searchResult[i]["profileImgUrl"]),
+                            ),
+                            SizedBox(width: 12.0),
+                            Text(
+                              "${searchResult[i]["username"]}",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.lightBlueAccent,
+                          borderRadius: BorderRadius.circular(100.0)
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               )
             )
           ],
