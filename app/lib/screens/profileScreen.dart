@@ -19,7 +19,14 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
 
-  Map profileScreenData = {};
+  String username;
+  String bio;
+  String profileImgUrl;
+  List followers = [];
+  List following = [];
+  List<PostModel> posts = [];
+  bool isLoading = true;
+  bool isFollowing;
 
   void initState() {
     getProfileData();
@@ -31,8 +38,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     DatabaseEvents event = GetProfileEvent(profileUserId: widget.profileUserId);
     Map data = await widget.databaseBloc.mapEventToState(event).first;
     setState(() {
-      profileScreenData = data;
+      username = data['username'];
+      bio = data['bio'];
+      profileImgUrl =  data['profileImgUrl'];
+      followers = data['followers'];
+      following = data['following'];
+      posts = data['posts'];
+      isFollowing = followers.contains(widget.databaseBloc.currentUser.id);
+      isLoading = false;
     });
+  }
+
+  followProfile() async {
+    if (isFollowing) {
+      // Unfollowing profile
+      UnfollowEvent event = UnfollowEvent(profileId: widget.profileUserId);
+      await widget.databaseBloc.mapEventToState(event).first;
+      setState(() {
+        followers.remove(widget.databaseBloc.currentUser.id);
+        isFollowing = false;
+      });
+    } else {
+      // Following profile
+      FollowEvent event = FollowEvent(profileId: widget.profileUserId);
+      await widget.databaseBloc.mapEventToState(event).first;
+      setState(() {
+        followers.add(widget.databaseBloc.currentUser.id);
+        isFollowing = true;
+      });
+    }
   }
 
   Widget profilePicture(String url, double width) {
@@ -124,7 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         width: double.maxFinite,
         padding: EdgeInsets.all(7.0),
         child: Text(
-          "Follow",
+          isFollowing ? "Unfollow" : "Follow",
           style: TextStyle(
             color: Colors.white,
             fontSize: 16.0,
@@ -136,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           borderRadius: BorderRadius.circular(100.0),
         ),
       ),
-      onTap: () => print("Follow"),
+      onTap: () => followProfile(),
     );
   }
 
@@ -200,7 +234,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),
-      body: profileScreenData.isEmpty ? Center(
+      body: isLoading ? Center(
         child: CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
         ),
@@ -212,7 +246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                profilePicture(profileScreenData['profileImgUrl'], width),
+                profilePicture(profileImgUrl, width),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 25),
@@ -221,9 +255,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            buildCountColumn("Posts", profileScreenData['postCount']),
-                            buildCountColumn("Followers", profileScreenData['followers']),
-                            buildCountColumn("Following", profileScreenData['following']),
+                            buildCountColumn("Posts", posts.length),
+                            buildCountColumn("Followers", followers.length),
+                            buildCountColumn("Following", following.length),
                           ],
                         ),
                         SizedBox(height: 10.0),
@@ -238,7 +272,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Padding(
             padding: const EdgeInsets.only(left: 20.0),
             child: Text(
-              "${profileScreenData['username']}",
+              "$username",
               style: TextStyle(
                 fontSize: 16.0,
                 fontWeight: FontWeight.bold
@@ -248,7 +282,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Padding(
             padding: const EdgeInsets.only(left: 20.0, top: 10.0, bottom: 10.0),
             child: Text(
-              "${profileScreenData['bio']}",
+              "$bio",
               style: TextStyle(
                 fontSize: 16.0,
                 fontWeight: FontWeight.w400
@@ -256,7 +290,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           Divider(thickness: 2.0, height: 0.0),
-          gridViewPosts(profileScreenData['posts'], context),
+          gridViewPosts(posts, context),
         ],
       )
     );
