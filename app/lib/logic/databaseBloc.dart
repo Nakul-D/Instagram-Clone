@@ -118,6 +118,9 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
       String username;
       String bio;
       String profileImgUrl;
+      List followers = [];
+      List following = [];
+      List<PostModel> posts = [];
       if (event.profileUserId == currentUser.id){
         username = currentUser.username;
         bio = currentUser.bio;
@@ -133,22 +136,24 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
       // Fetching user's followers
       QuerySnapshot followersSnapshot = await followersRef
         .doc(event.profileUserId)
-        .collection("userFollowers")
+        .collection("followers")
         .get();
-      int followers = followersSnapshot.docs.length;
+      followersSnapshot.docs.forEach((doc) {
+        followers.add(doc.id);
+      });
       // Fetching user's following
       QuerySnapshot followingSnapshot = await followingRef
         .doc(event.profileUserId)
-        .collection("userFollowing")
+        .collection("following")
         .get();
-      int following = followingSnapshot.docs.length;
+      followingSnapshot.docs.forEach((doc) {
+        following.add(doc.id);
+      });
       // Getting user's posts
       QuerySnapshot postSnapshot = await postsRef
         .doc(event.profileUserId)
         .collection("posts")
         .get();
-      int postCount = postSnapshot.docs.length;
-      List<PostModel> posts = [];
       postSnapshot.docs.forEach((doc) {
         Map postData = doc.data();
         Timestamp timestamp = postData["timestamp"];
@@ -172,7 +177,6 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
         "profileImgUrl": profileImgUrl,
         "followers": followers,
         "following": following,
-        "postCount": postCount,
         "posts": posts,
       };
     }
@@ -295,6 +299,48 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
         });
       });
       yield users;
+    }
+
+    // Following a user
+    if (event is FollowEvent) {
+      // Adding profile to user's following
+      followingRef
+        .doc(currentUser.id)
+        .collection("following")
+        .doc(event.profileId)
+        .set({});
+      // Adding user to profile's followers
+      followersRef
+        .doc(event.profileId)
+        .collection("followers")
+        .doc(currentUser.id)
+        .set({});
+      yield "Followed";
+    }
+
+    // Unfollowing a user
+    if (event is UnfollowEvent) {
+      // Deleting profile from user's following
+      followingRef
+        .doc(currentUser.id)
+        .collection("following")
+        .doc(event.profileId)
+        .get().then((doc) {
+          if (doc.exists) {
+            doc.reference.delete();
+          }
+        });
+      // Deleting user from profile's followers
+      followersRef
+        .doc(event.profileId)
+        .collection("followers")
+        .doc(currentUser.id)
+        .get().then((doc) {
+          if (doc.exists) {
+            doc.reference.delete();
+          }
+        });
+      yield "Unfollowed";
     }
 
   }
