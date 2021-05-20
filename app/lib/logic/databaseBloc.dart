@@ -16,7 +16,7 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
 
   FirebaseFirestore firestore = initializeFirestore();
   FirebaseAuth firebaseAuth = initializeFirebaseAuth();
-  Reference firebaseStorage = FirebaseStorage.instance.ref();
+  Reference firebaseStorage = initializeFirebaseStorage();
   UserModel currentUser = UserModel();
   
   @override
@@ -66,7 +66,6 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
               "id": currentUser.id,
               "username": event.username,
               "email": event.email,
-              "password": event.password,
               "timestamp": DateTime.now(),
               "bio": "",
               "profileImgUrl": "",
@@ -257,9 +256,10 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
       // Adding comment data to comments list
       for (int i = 0; i < snapshot.docs.length; i++) {
         QueryDocumentSnapshot doc = snapshot.docs[i];
-        DocumentSnapshot userDocument = await usersRef.doc(doc["userId"]).get();
-        String username = userDocument.data()["username"];
-        String profileImgUrl = userDocument.data()["profileImgUrl"];
+        DocumentSnapshot documentSnapshot = await usersRef.doc(doc["userId"]).get();
+        Map userDocument = documentSnapshot.data();
+        String username = userDocument["username"];
+        String profileImgUrl = userDocument["profileImgUrl"];
         Timestamp timestamp = doc["timestamp"];
         comments.add({
           "userId": doc["userId"],
@@ -346,15 +346,6 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
   }
 }
 
-FirebaseFirestore initializeFirestore() {
-  // This function will initialize firestore and will connect the running device
-  // to the local firebase emulator
-  final String host = Platform.isAndroid ? "10.0.2.2:8080" : "localhost:8080";
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
-  firestore.settings = Settings(host: host, sslEnabled: false, persistenceEnabled: false);
-  return firestore;
-}
-
 FirebaseAuth initializeFirebaseAuth() {
   // This function will initialize firebaseAuth and will connect the running device
   // to the local firebase emulator
@@ -362,6 +353,24 @@ FirebaseAuth initializeFirebaseAuth() {
   FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   firebaseAuth.useEmulator(host);
   return firebaseAuth;
+}
+
+FirebaseFirestore initializeFirestore() {
+  // This function will initialize firebaseFirestore and will connect the running device
+  // to the local firebase emulator
+  final String host = Platform.isAndroid ? "10.0.2.2:8080" : "localhost:8080";
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  firestore.settings = Settings(host: host, sslEnabled: false, persistenceEnabled: false);
+  return firestore;
+}
+
+Reference initializeFirebaseStorage() {
+  // This function will initialize firebaseStorage  and will connect the running device
+  // to the local firebase emulator
+  final String host = Platform.isAndroid ? "10.0.2.2" : "localhost";
+  FirebaseStorage firebaseStorage = FirebaseStorage.instance;
+  firebaseStorage.useEmulator(host: host, port: 9199);
+  return firebaseStorage.ref();
 }
 
 Future<File> compressImage(File rawImage, String id) async {

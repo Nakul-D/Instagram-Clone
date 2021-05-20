@@ -212,14 +212,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     });
     
-    return GridView.count(
-      crossAxisCount: 3,
-      childAspectRatio: 1.0,
-      mainAxisSpacing: 1.5,
-      crossAxisSpacing: 1.5,
-      shrinkWrap: true,
-      physics: AlwaysScrollableScrollPhysics(),
-      children: gridTiles,
+    return Expanded(
+      child: GridView.count(
+        crossAxisCount: 3,
+        childAspectRatio: 1.0,
+        mainAxisSpacing: 1.5,
+        crossAxisSpacing: 1.5,
+        shrinkWrap: true,
+        physics: AlwaysScrollableScrollPhysics(),
+        children: gridTiles,
+      ),
     );
   }
 
