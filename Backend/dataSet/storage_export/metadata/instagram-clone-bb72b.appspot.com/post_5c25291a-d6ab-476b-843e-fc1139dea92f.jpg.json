@@ -1,18 +1,18 @@
 {
-  "name": "post_8f45af06-7f96-4d9d-a6f4-eec88de7ce78.jpg",
+  "name": "post_5c25291a-d6ab-476b-843e-fc1139dea92f.jpg",
   "bucket": "instagram-clone-bb72b.appspot.com",
   "contentType": "",
   "metageneration": 1,
-  "generation": 1621479004183,
+  "generation": 1621659489492,
   "storageClass": "STANDARD",
   "etag": "someETag",
   "contentDisposition": "inline",
   "contentEncoding": "identity",
   "downloadTokens": [
-    "8d3625c8-f2ca-46b0-a97e-210062880613"
+    "5bee6593-d7e8-4fa3-b660-a62e95ccba01"
   ],
-  "timeCreated": "2021-05-20T02:50:04.182Z",
-  "updated": "2021-05-20T02:50:04.185Z",
+  "timeCreated": "2021-05-22T04:58:09.491Z",
+  "updated": "2021-05-22T04:58:09.493Z",
   "size": 12330,
   "md5Hash": "OwgAZ+sBXWeTi5klEIv1lw==",
   "crc32c": "3702087518"
