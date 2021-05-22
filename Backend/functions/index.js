@@ -88,18 +88,21 @@ exports.onCommentAdded = functions.firestore
         // Fetching comment data
         const commentData = commentQuery.data()["comment"];
         
-        // Adding comment notification to owner's activity feed
-        activityRef
-            .doc(ownerId)
-            .collection("feed")
-            .doc()
-            .set({
-                "type": "comment",
-                "userId": userId,
-                "timestamp": timestamp,
-                "postId": postId,
-                "commentData": commentData,
-            });
+        // Will not add owner's comment to owner's activity feed
+        if (userId != ownerId) {
+            // Adding comment notification to owner's activity feed
+            activityRef
+                .doc(ownerId)
+                .collection("feed")
+                .doc()
+                .set({
+                    "type": "comment",
+                    "userId": userId,
+                    "timestamp": timestamp,
+                    "postId": postId,
+                    "commentData": commentData,
+                });
+        }
     })
 
 // This function will be triggered when post is likes
@@ -113,20 +116,23 @@ exports.onPostLiked = functions.firestore
         // Fetching id of the user who liked the post
         const likes = new Map(Object.entries(change.after.data()["like"]));
         const userId = Array.from(likes.keys()).pop();
-        const isLiked = Array.from(likes.values()).pop();
 
-        if (isLiked == true) {
-            // Adding like notification to owner's activity feed
-            const timestamp = admin.firestore.Timestamp.now().toDate();
-            activityRef
-                .doc(ownerId)
-                .collection("feed")
-                .doc()
-                .set({
-                    "type": "like",
-                    "userId": userId,
-                    "timestamp": timestamp,
-                    "postId": postId,
-                });
+        // Will not add owner's like to owner's activity feed
+        if (userId != ownerId) {
+            const isLiked = Array.from(likes.values()).pop();
+            if (isLiked == true) {
+                const timestamp = admin.firestore.Timestamp.now().toDate();
+                // Adding like notification to owner's activity feed
+                activityRef
+                    .doc(ownerId)
+                    .collection("feed")
+                    .doc()
+                    .set({
+                        "type": "like",
+                        "userId": userId,
+                        "timestamp": timestamp,
+                        "postId": postId,
+                    });
+            }
         }
     })
