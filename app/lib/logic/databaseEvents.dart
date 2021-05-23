@@ -72,3 +72,8 @@ class UnfollowEvent extends DatabaseEvents {
   String profileId;
   UnfollowEvent({this.profileId});
 }
+
+class GetActivityFeedEvent extends DatabaseEvents {
+  String profileId;
+  GetActivityFeedEvent({this.profileId});
+}

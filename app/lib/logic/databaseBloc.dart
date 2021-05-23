@@ -27,6 +27,7 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
     final followersRef = firestore.collection('followers');
     final followingRef = firestore.collection('following');
     final commentsRef = firestore.collection('comments');
+    final activityRef = firestore.collection('activity');
 
     // Authenticating user
     if (event is LoginEvent) {
@@ -152,6 +153,7 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
       QuerySnapshot postSnapshot = await postsRef
         .doc(event.profileUserId)
         .collection("posts")
+        .orderBy("timestamp", descending: true)
         .get();
       postSnapshot.docs.forEach((doc) {
         Map postData = doc.data();
@@ -341,6 +343,53 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
           }
         });
       yield "Unfollowed";
+    }
+
+    // Fetching activity feed data
+    if (event is GetActivityFeedEvent) {
+      List activityFeedData = [];
+      QuerySnapshot snapshot = await activityRef
+        .doc(currentUser.id)
+        .collection("feed")
+        .orderBy("timestamp", descending: true)
+        .get();
+      
+      for (int i = 0; i < snapshot.docs.length; i++) {
+
+        QueryDocumentSnapshot doc = snapshot.docs[i];
+        String type = doc["type"];
+        String userId = doc["userId"];
+        Timestamp rawTimestamp = doc["timestamp"];
+        DateTime timestamp = rawTimestamp.toDate();
+        DocumentSnapshot userDoc = await usersRef
+          .doc(userId)
+          .get();
+        String username = userDoc["username"];
+        String profileImgUrl = userDoc["profileImgUrl"];
+        String postId = type != "follow" ? doc["postId"] : "";
+        String postImgUrl = "";
+        if (type != "follow") {
+          DocumentSnapshot postDoc = await postsRef
+            .doc(currentUser.id)
+            .collection("posts")
+            .doc(postId)
+            .get();
+          postImgUrl = postDoc["mediaUrl"];
+        }
+        String commentData = type == "comment" ? doc["commentData"] : "";
+        // Adding data to list activityFeedData
+        activityFeedData.add({
+          "type": type,
+          "userId": userId,
+          "timestamp": timestamp,
+          "username": username,
+          "profileImgUrl": profileImgUrl,
+          "postId": postId,
+          "postImgUrl": postImgUrl,
+          "commentData": commentData,
+        });
+      }
+      yield activityFeedData;
     }
 
   }
