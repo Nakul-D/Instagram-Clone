@@ -28,6 +28,7 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
     final followingRef = firestore.collection('following');
     final commentsRef = firestore.collection('comments');
     final activityRef = firestore.collection('activity');
+    final timelineRef = firestore.collection('timeline');
 
     // Authenticating user
     if (event is LoginEvent) {
@@ -394,7 +395,40 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
 
     // Fetching posts for Timeline
     if (event is GetTimelineEvent) {
+      List<PostModel> timelinePosts = [];
+
+      // Fetching user's timeline feed
+      QuerySnapshot snapshot = await timelineRef
+        .doc(currentUser.id)
+        .collection("timeline")
+        .orderBy("timestamp", descending: true)
+        .get();
       
+      // Fetching post data
+      for (int i = 0; i < snapshot.docs.length; i++) {
+        QueryDocumentSnapshot doc = snapshot.docs[i];
+        DocumentSnapshot postSnapshot = await postsRef
+          .doc(doc["ownerId"])
+          .collection("posts")
+          .doc(doc["postId"])
+          .get();
+        Map postData = postSnapshot.data();
+        Timestamp timestamp = postData["timestamp"];
+        PostModel post = PostModel(
+          postId: postData["postId"],
+          ownerId: postData["ownerId"],
+          username: postData["username"],
+          profileImgUrl: postData["profileImgUrl"],
+          mediaUrl: postData["mediaUrl"],
+          caption: postData["caption"],
+          location: postData["location"],
+          timestamp: timestamp.toDate(),
+          like: postData["like"],
+        );
+        timelinePosts.add(post);
+      }
+
+      yield timelinePosts;
     }
 
   }

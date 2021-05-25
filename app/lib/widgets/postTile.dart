@@ -103,11 +103,11 @@ class _PostTileState extends State<PostTile> {
           child: Row(
             children: [
               widget.postModel.profileImgUrl != "" ? CircleAvatar(
-                radius: widget.width/20,
+                radius: widget.width/15,
                 backgroundColor: Colors.lightBlueAccent,
                 foregroundImage: CachedNetworkImageProvider(widget.postModel.profileImgUrl),
               ) : CircleAvatar(
-                radius: widget.width/20,
+                radius: widget.width/15,
                 backgroundColor: Colors.lightBlueAccent,
               ),
               SizedBox(width: 12),
@@ -139,10 +139,10 @@ class _PostTileState extends State<PostTile> {
             GestureDetector(
               onDoubleTap: () => handleLikePost(),
               child: AspectRatio(
-                aspectRatio: 1.0,
+                aspectRatio: 1/1,
                 child: Image(
                   image: CachedNetworkImageProvider(widget.postModel.mediaUrl),
-                  fit: BoxFit.contain,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
