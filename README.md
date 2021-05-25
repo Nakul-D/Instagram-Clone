@@ -7,11 +7,11 @@ Instagram Clone using Flutter and Firebase
 - **Firebase** for backend
 
 # Screenshots
-<img src = "Screenshots/LoginScreen.jpg" width = "200" alt = "">  <img src = "Screenshots/ProfileScreen.jpg" width = "200" alt = "">  <img src = "Screenshots/UploadScreen.jpg" width = "200" alt = "">
+<img src = "Screenshots/LoginScreen.jpg" width = "200" alt = "">  <img src = "Screenshots/HomeScreen.jpg" width = "200" alt = "">  <img src = "Screenshots/ProfileScreen.jpg" width = "200" alt = "">  <img src = "Screenshots/UploadScreen.jpg" width = "200" alt = "">
 
 # How to run this project in your local environment
 
->Note : Firebase emulator must be installed
+>Note : Firebase CLI must be installed
 
 - Clone the repo to your local environment
 - Run `flutter pub get`
@@ -19,3 +19,4 @@ Instagram Clone using Flutter and Firebase
 - Run `npm install`
 - Navigate to **/Instagram-Clone/Backend**
 - Run `firebase emulators:start --import=./dataSet --export-on-exit`
+- Login with email: *testemail@gmail.com*, password: *123456789*
