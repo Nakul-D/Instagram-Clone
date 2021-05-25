@@ -10,6 +10,7 @@ const followersRef = admin.firestore().collection('followers');
 const followingRef = admin.firestore().collection('following');
 const commentsRef = admin.firestore().collection('comments');
 const activityRef = admin.firestore().collection('activity');
+const timelineRef = admin.firestore().collection('timeline');
 
 // This function will be triggered when profile is updated
 exports.onProfileUpdate = functions.firestore
@@ -135,4 +136,87 @@ exports.onPostLiked = functions.firestore
                     });
             }
         }
+    })
+
+// This function will be triggered when a user follows another user
+exports.onFollowedUser = functions.firestore
+    .document("/following/{userId}/following/{profileId}")
+    .onCreate(async (snapshot, context) => {
+
+        const userId = context.params.userId;
+        const profileId = context.params.profileId;
+
+        // Fetching followed user's posts
+        const postSnapshot = await postsRef
+            .doc(profileId)
+            .collection("posts")
+            .get();
+        
+        // Adding posts to user's timeline
+        postSnapshot.docs.forEach(async (doc) => {
+            const data = doc.data();
+            await timelineRef
+                .doc(userId)
+                .collection("timeline")
+                .doc(doc.id)
+                .set({
+                    "postId": data["postId"],
+                    "ownerId": data["ownerId"],
+                    "timestamp": data["timestamp"],
+                });
+        });
+    })
+
+// This function will be triggered when a user unfollows another user
+exports.onUnfollowedUser = functions.firestore
+    .document("/following/{userId}/following/{profileId}")
+    .onDelete(async (snapshot, context) => {
+
+        const userId = context.params.userId;
+        const profileId = context.params.profileId;
+
+        // Fetching Unfollowed user's post from timeline
+        const postSnapshot = await timelineRef
+            .doc(userId)
+            .collection("timeline")
+            .where("ownerId", "==", profileId)
+            .get();
+        
+        // Deleting unfollowed user's posts from user's timeline
+        postSnapshot.docs.forEach(async (doc) => {
+            await timelineRef
+                .doc(userId)
+                .collection("timeline")
+                .doc(doc.id)
+                .delete();
+        })
+    })
+
+// This function will be triggered when a post is uploaded
+exports.onPostUploaded = functions.firestore
+    .document("/posts/{userId}/posts/{postId}")
+    .onCreate(async (snapshot, context) => {
+        
+        const userId = context.params.userId;
+        const postId = context.params.postId;
+
+        // Fetching user's followers
+        const followersSnapshot = await followersRef
+            .doc(userId)
+            .collection("followers")
+            .get();
+        
+        // Adding post to follower's timeline
+        followersSnapshot.docs.forEach(async (doc) => {
+            const data = snapshot.data();
+            await timelineRef
+                .doc(doc.id)
+                .collection("timeline")
+                .doc(postId)
+                .set({
+                    "postId": data["postId"],
+                    "ownerId": data["ownerId"],
+                    "timestamp": data["timestamp"],
+                });
+        })
     })

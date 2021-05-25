@@ -77,3 +77,5 @@ class GetActivityFeedEvent extends DatabaseEvents {
   String profileId;
   GetActivityFeedEvent({this.profileId});
 }
+
+class GetTimelineEvent extends DatabaseEvents {}

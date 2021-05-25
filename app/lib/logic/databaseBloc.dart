@@ -392,6 +392,11 @@ class DatabaseBloc extends Bloc<DatabaseEvents, dynamic> {
       yield activityFeedData;
     }
 
+    // Fetching posts for Timeline
+    if (event is GetTimelineEvent) {
+      
+    }
+
   }
 }
 
