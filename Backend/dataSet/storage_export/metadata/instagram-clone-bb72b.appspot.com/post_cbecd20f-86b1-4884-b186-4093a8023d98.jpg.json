@@ -1,0 +1,19 @@
+{
+  "name": "post_cbecd20f-86b1-4884-b186-4093a8023d98.jpg",
+  "bucket": "instagram-clone-bb72b.appspot.com",
+  "contentType": "",
+  "metageneration": 1,
+  "generation": 1625234397390,
+  "storageClass": "STANDARD",
+  "etag": "someETag",
+  "contentDisposition": "inline",
+  "contentEncoding": "identity",
+  "downloadTokens": [
+    "a65d0945-bb86-466a-8697-fae18b5a21f9"
+  ],
+  "timeCreated": "2021-07-02T13:59:57.389Z",
+  "updated": "2021-07-02T13:59:57.396Z",
+  "size": 1663575,
+  "md5Hash": "E8tEMy2mFZ/y/tyePgrgng==",
+  "crc32c": "430460919"
+}
